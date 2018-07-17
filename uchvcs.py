@@ -854,9 +854,9 @@ def plot_Nth_neighbors(coords1,vel1,coords2=None,vel2=None,N=[3],f=[0.2]):
     #Which means they must be passed as lists!
     #in practice, it will be easiest to only iterate on one at a time
     if coords2 == None:
-        ind_neighbor = np.array(N)
-    else:
-        ind_neighbor = np.array(N)-1
+        N=np.array(N)+1 #since I won't subtract from it when calling get_Nth_neighbors because I'll pass c2
+#    else:
+#        ind_neighbor = np.array(N)-1
     if coords2 == None:
         coords2 = [coords1]
     if vel2 == None:
@@ -865,28 +865,30 @@ def plot_Nth_neighbors(coords1,vel1,coords2=None,vel2=None,N=[3],f=[0.2]):
     #Not sure if there's an order that makes most sense - top down or bottom up?
     #Will go top down and just try and make sure I only ever call this function in a reasonable manner
     ntot = len(coords2)*len(N)*len(f)
-    dist2d = np.empty(ntot,len(coords1))
-    dist3d = np.empty(ntot,len(coords1))
-    label = np.empty(ntot)
+    dist2d = []#np.empty(ntot,len(coords1))
+    dist3d = []#np.empty(ntot,len(coords1))
+    label = [] #np.empty(ntot)
     i=0 #index
-    for k,cat2,v2 in enumerate(zip(coords2,vel2)):
+    for k,[cat2,v2] in enumerate(zip(coords2,vel2)):
         for neigh in N:
             for link in f: #only iterate for 3D
                 d2d,d3d = get_Nth_neighbor(coords1,vel1,cat2,v2, neigh, link)
-                dist2d[i,:] = d2d
-                dist3d[i,:] = d3d
-                label[i] = 'Catalog '+str(k)+', '+str(neigh)+'th neighbor with link '+str(link)+'deg per km/s'
-                i=i+1
+                dist2d.append(d2d) #[i,:] = d2d
+                dist3d.append (d3d) #[i,:] = d3d
+                label.append('Cat '+str(k)+', '+str(neigh)+'th N w/ '+str(link)+'deg/km/s')
+                #i=i+1
     #now do the plotting!
     fig, ax1=plt.subplots(1,1,figsize=(6,6))
-    for i in xrange(label):
-        values2d, bins = np.histogram(dist2d[i,:], bins=500,range=(0,100))
+    for i in xrange(len(label)):
+        values2d, bins = np.histogram(dist2d[i], bins=500,range=(0,100))
         cum2d = np.cumsum(values2d)/float(len(coords1))
-        values3d, bins = np.histogram(dist3d[i,:], bins=500,range=(0,100))
+        values3d, bins = np.histogram(dist3d[i], bins=500,range=(0,100))
         cum3d = np.cumsum(values3d)/float(len(coords1))
         plt.plot(bins[:-1], cum2d,linestyle='--',label='2D, '+label[i])
         plt.plot(bins[:-1], cum3d,label='3D, '+label[i])
-    
+        plt.ylim(0,1.1)
+        plt.xlim(0,100)
+        plt.legend(loc=0)
 
     return fig
    
